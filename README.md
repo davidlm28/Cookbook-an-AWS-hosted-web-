@@ -26,6 +26,8 @@ La aplicación "Cookbook" está construida sobre una arquitectura **serverless y
 
 **Componentes de AWS Utilizados:**
 
+![Arquitectura de la solución](architecture_diagram.jpg)
+
 * **Amazon S3 (Simple Storage Service):**
 
     * **Rol:** Alojamiento del frontend estático (archivos HTML, CSS, JavaScript).
