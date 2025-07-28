@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CookBook - Añadir Nueva Receta</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="hero-section">
+        <div class="hero-content">
+            <i class="fas fa-plus-circle hero-icon"></i>
+            <h1>Añadir/Editar Receta</h1>
+            <p>Comparte tus creaciones culinarias con el mundo</p>
+            <a href="index.html" class="btn-secondary hero-button">
+                <i class="fas fa-book-open"></i> Ver Todas las Recetas
+            </a>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M0,60 C150,120 350,0 600,60 C850,120 1050,0 1200,60 L1200,120 L0,120 Z" fill="white"></path>
+            </svg>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-plus-circle"></i>
+                    <h2 id="formTitle">Añadir Nueva Receta</h2>
+                </div>
+                
+                <form id="recipeForm" class="recipe-form">
+                    <input type="hidden" id="idReceta">
+                    
+                    <div class="input-group">
+                        <label for="Nombre">
+                            <i class="fas fa-signature"></i>
+                            Nombre de la Receta
+                        </label>
+                        <input type="text" id="Nombre" placeholder="Introduce el nombre de la receta..." required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="Ingredientes">
+                            <i class="fas fa-list"></i>
+                            Ingredientes
+                        </label>
+                        <textarea id="Ingredientes" rows="4" placeholder="Enumera los ingredientes separados por comas..." required></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="Instrucciones">
+                            <i class="fas fa-clipboard-list"></i>
+                            Instrucciones
+                        </label>
+                        <textarea id="Instrucciones" rows="6" placeholder="Escribe las instrucciones de cocinado..." required></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" id="submitButton" class="btn-primary">
+                            <i class="fas fa-save"></i>
+                            Añadir Receta
+                        </button>
+                        <button type="button" id="cancelEditButton" class="btn-secondary" style="display:none;">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 CookBook. Hecho con <i class="fas fa-heart"></i> para entusiastas de la cocina</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

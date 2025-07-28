@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CookBook - Tu Colección de Recetas</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="hero-section">
+        <div class="hero-content">
+            <i class="fas fa-utensils hero-icon"></i>
+            <h1>CookBook</h1>
+            <p>Descubre, crea y comparte recetas increíbles</p>
+            <a href="add-recipe.html" class="btn-primary hero-button">
+                <i class="fas fa-plus-circle"></i> Añadir Nueva Receta
+            </a>
+        </div>
+        <div class="hero-wave">
+            <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M0,60 C150,120 350,0 600,60 C850,120 1050,0 1200,60 L1200,120 L0,120 Z" fill="white"></path>
+            </svg>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="divider">
+                <div class="divider-line"></div>
+                <div class="divider-text">
+                    <i class="fas fa-book-open"></i>
+                    Tu Colección de Recetas
+                </div>
+                <div class="divider-line"></div>
+            </div>
+
+            <div class="list-section">
+                <div class="recipes-header">
+                    <h2>
+                        <i class="fas fa-utensils"></i>
+                        Todas las Recetas
+                    </h2>
+                    <div class="recipes-count" id="recipesCount">0 recetas</div>
+                </div>
+                
+                <div id="recipeList" class="recipes-grid">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Cargando recetas...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 CookBook. Hecho con <i class="fas fa-heart"></i> para entusiastas de la cocina</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

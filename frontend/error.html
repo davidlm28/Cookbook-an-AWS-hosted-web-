@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Directorio Público de Recetas</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para la página de error */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            text-align: center;
+            background-color: #f8d7da; /* Fondo suave para errores */
+        }
+        .error-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid #dc3545; /* Borde rojo */
+        }
+        .error-container h1 {
+            color: #dc3545; /* Rojo de error */
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .error-container p {
+            font-size: 1.1em;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        .error-container a {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+        .error-container a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>¡Oops!</h1>
+        <p>Parece que algo salió mal o la página que buscas no existe.</p>
+        <p>Por favor, revisa la URL o vuelve a la página de inicio.</p>
+        <a href="/">Ir a la Página de Inicio</a>
+    </div>
+</body>
+</html>
