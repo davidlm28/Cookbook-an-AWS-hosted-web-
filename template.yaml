@@ -1,0 +1,333 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Cookbook - Una aplicación serverless para gestionar recetas.
+  Despliega el backend de la aplicación Cookbook, incluyendo Lambdas, API Gateway,
+  DynamoDB, SQS, SNS y CloudWatch Alarms.
+
+Parameters:
+  AppAssetsBucketName:
+    Type: String
+    Description: Nombre del bucket S3 existente para los activos de la aplicación (frontend y ZIPs de Lambda, ej. recetas-frontend-immune)
+    Default: recetas-frontend-immune
+
+  DLQNotificationEmail:
+    Type: String
+    Description: Correo electrónico para recibir alertas cuando hay mensajes en la DLQ.
+    Default: david.lazaro@alumni.immune.institute
+
+Globals:
+  Function:
+    Runtime: python3.9
+    Timeout: 30
+    MemorySize: 128
+    Tracing: Active
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref RecipesTable
+        SQS_QUEUE_URL: !GetAtt RecipeSubmissionQueue.QueueUrl
+        SNS_TOPIC_ARN: !Ref DLQAlarmSNSTopic
+
+Resources:
+  AppAssetsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref AppAssetsBucketName
+      WebsiteConfiguration:
+        IndexDocument: frontend/index.html
+        ErrorDocument: frontend/error.html
+      Tags:
+        - Key: Project
+          Value: Cookbook
+        - Key: Purpose
+          Value: AppAssetsStorage
+
+  RecipesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Recipes
+      BillingMode: PROVISIONED
+      ReadCapacityUnits: 5
+      WriteCapacityUnits: 5
+      KeySchema:
+        - AttributeName: idReceta
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: idReceta
+          Type: S
+      Tags:
+        - Key: Project
+          Value: Cookbook
+
+  RecipeSubmissionQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: RecipeSubmissionQueue
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt RecipeSubmissionDLQ.Arn
+        maxReceiveCount: 5
+      Tags:
+        - Key: Project
+          Value: Cookbook
+
+  RecipeSubmissionDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: RecipeSubmissionDLQ
+      MessageRetentionPeriod: 1209600
+      Tags:
+        - Key: Project
+          Value: Cookbook
+
+  DLQAlarmSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: CookbookDLQAlerts
+      TopicName: CookbookDLQAlertsTopic
+      Tags:
+        - Key: Project
+          Value: Cookbook
+
+  DLQAlarmEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: !Ref DLQNotificationEmail
+      TopicArn: !Ref DLQAlarmSNSTopic
+
+  CookbookLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CookbookLambdaPolicy
+          Document:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                Resource: !GetAtt RecipesTable.Arn
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource:
+                  - !GetAtt RecipeSubmissionQueue.Arn
+                  - !GetAtt RecipeSubmissionDLQ.Arn
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !GetAtt DLQAlarmSNSTopic.Arn
+      Tags:
+        - Key: Project
+          Value: Cookbook
+
+  SubmitRecetaLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: submitRecetaLambda.lambda_handler
+      CodeUri: !Sub "s3://${AppAssetsBucketName}/backend/submitRecetaLambda.zip"
+      Role: !GetAtt CookbookLambdaRole.Arn
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /recetas
+            Method: post
+            RestApiId: !Ref CookbookApi
+
+  ProcessRecetaLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: procesarRecetaLambda.lambda_handler
+      CodeUri: !Sub "s3://${AppAssetsBucketName}/backend/procesarRecetaLambda.zip"
+      Role: !GetAtt CookbookLambdaRole.Arn
+      Events:
+        SQS:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt RecipeSubmissionQueue.Arn
+            BatchSize: 1
+
+  GetRecetasLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getRecetasLambda.lambda_handler
+      CodeUri: !Sub "s3://${AppAssetsBucketName}/backend/getRecetasLambda.zip"
+      Role: !GetAtt CookbookLambdaRole.Arn
+      Events:
+        GetAll:
+          Type: Api
+          Properties:
+            Path: /recetas
+            Method: get
+            RestApiId: !Ref CookbookApi
+        GetById:
+          Type: Api
+          Properties:
+            Path: /recetas/{idReceta}
+            Method: get
+            RestApiId: !Ref CookbookApi
+
+  EliminarRecetaLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: eliminarRecetaLambda.lambda_handler
+      CodeUri: !Sub "s3://${AppAssetsBucketName}/backend/eliminarRecetaLambda.zip"
+      Role: !GetAtt CookbookLambdaRole.Arn
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /recetas/{idReceta}
+            Method: delete
+            RestApiId: !Ref CookbookApi
+
+  CookbookApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      DefinitionBody:
+        swagger: '2.0'
+        info:
+          title: CookbookApi
+        paths:
+          /recetas:
+            post:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SubmitRecetaLambda.Arn}/invocations"
+            get:
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetRecetasLambda.Arn}/invocations"
+            options:
+              responses:
+                200:
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: "{\"statusCode\": 200}"
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+          /recetas/{idReceta}:
+            get:
+              parameters:
+                - name: idReceta
+                  in: path
+                  required: true
+                  type: string
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetRecetasLambda.Arn}/invocations"
+            put:
+              parameters:
+                - name: idReceta
+                  in: path
+                  required: true
+                  type: string
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SubmitRecetaLambda.Arn}/invocations"
+            delete:
+              parameters:
+                - name: idReceta
+                  in: path
+                  required: true
+                  type: string
+              x-amazon-apigateway-integration:
+                type: aws_proxy
+                httpMethod: POST
+                uri: !Sub "arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${EliminarRecetaLambda.Arn}/invocations"
+            options:
+              responses:
+                200:
+                  headers:
+                    Access-Control-Allow-Origin:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Headers:
+                      type: string
+              x-amazon-apigateway-integration:
+                type: mock
+                requestTemplates:
+                  application/json: "{\"statusCode\": 200}"
+                responses:
+                  default:
+                    statusCode: 200
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+                      method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                      method.response.header.Access-Control-Allow-Origin: "'*'"
+      Cors:
+        AllowOrigin: "'*'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+
+  DLQMessagesAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: Cookbook-DLQ-MessagesInQueue
+      AlarmDescription: 'Alerta si hay mensajes en la Dead-Letter Queue de recetas (RecipeSubmissionDLQ).'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: 1
+      MetricName: ApproximateNumberOfMessagesVisible
+      Namespace: AWS/SQS
+      Period: 60
+      Statistic: Sum
+      Threshold: 1
+      TreatMissingData: notBreaching
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt RecipeSubmissionDLQ.QueueName
+      AlarmActions:
+        - !Ref DLQAlarmSNSTopic
+      Tags:
+        - Key: Project
+          Value: Cookbook
+
+Outputs:
+  CookbookApiUrl:
+    Description: "URL del API Gateway para el Cookbook"
+    Value: !Sub "https://${CookbookApi}.execute-api.${AWS::Region}.amazonaws.com/dev"
+  FrontendS3WebsiteUrl:
+    Description: "URL del sitio web estático del frontend en S3"
+    Value: !GetAtt AppAssetsBucket.WebsiteURL
+  RecipeSubmissionQueueUrl:
+    Description: "URL de la cola SQS de envío de recetas"
+    Value: !Ref RecipeSubmissionQueue
+  DLQAlarmSNSTopicArn:
+    Description: "ARN del tema SNS para las alertas de la DLQ"
+    Value: !Ref DLQAlarmSNSTopic
