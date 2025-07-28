@@ -189,4 +189,95 @@ El proyecto "Cookbook" ha sido diseñado y construido siguiendo diversas buenas 
 Al seguir estas buenas prácticas, el proyecto "Cookbook" no solo es funcional, sino que también establece una base sólida para futuras expansiones y operaciones en un entorno de producción.
 
 
+## 6. Flujo de funcionamiento (Ejemplo: añadir nueva receta)
+
+Para comprender cómo interactúan los componentes, veamos el flujo paso a paso cuando un usuario añade una nueva receta a través del frontend:
+
+0. **Acceder a la web**
+![Web Home](images/getRecetas.jpg)
+
+1.  **Interacción del usuario (Frontend en S3):**
+
+    * El usuario navega a la página "Añadir Nueva Receta" (`add-edit.html`) en el navegador.
+
+    * Rellena el formulario con el nombre, ingredientes e instrucciones de la receta.
+
+    * Hace clic en el botón "Añadir Receta".
+
+![Rellenar receta](images/rellenarReceta.jpg)
+
+
+2.  **Envío de solicitud (Frontend a API Gateway):**
+
+    * El código JavaScript (`form-script.js`) del frontend captura los datos del formulario.
+
+    * Realiza una solicitud `POST` HTTP al *endpoint* `/recetas` de tu **API Gateway**. El cuerpo de la solicitud contiene los datos de la receta en formato JSON.
+
+3.  **Recepción de solicitud (API Gateway a `submitRecetaLambda`):**
+
+    * **API Gateway** recibe la solicitud `POST /recetas`.
+
+    * Gracias a la **Integración Proxy de Lambda**, API Gateway invoca a la función **`submitRecetaLambda`**, pasándole el evento HTTP completo (incluyendo el cuerpo de la solicitud como una cadena JSON).
+
+
+4.  **Envío a cola ( `submitRecetaLambda` a SQS):**
+
+    * **`submitRecetaLambda`** extrae la cadena JSON de los datos de la receta del cuerpo del evento de API Gateway.
+
+    * Realiza una validación básica de los campos de la receta.
+
+    * Envía esta cadena JSON de la receta como un mensaje a la cola **Amazon SQS (`RecipeSubmissionQueue`)**.
+
+    * Inmediatamente, `submitRecetaLambda` devuelve una respuesta `202 Accepted` a **API Gateway**, que a su vez la envía al frontend. Esto hace que la interfaz de usuario responda rápidamente, sin esperar a que la receta se guarde en la base de datos.
+
+5.  **Procesamiento asíncrono (SQS a `procesarRecetaLambda`):**
+
+    * **Amazon SQS** recibe el mensaje y lo pone en la cola.
+
+    * La cola SQS actúa como un disparador para la función **`procesarRecetaLambda`**. SQS invoca a esta Lambda, pasándole el mensaje de la receta.
+
+6.  **Guardado en base de datos ( `procesarRecetaLambda` a DynamoDB):**
+
+    * **`procesarRecetaLambda`** parsea la cadena JSON del mensaje de SQS para obtener los datos de la receta como un diccionario Python.
+
+    * Si la receta es nueva, genera un `idReceta` único. Si es una actualización, utiliza el `idReceta` existente.
+
+    * Guarda (o actualiza) el ítem de la receta en la tabla **Amazon DynamoDB (`Recipes`)**.
+
+    * Si el procesamiento es exitoso, `procesarRecetaLambda` finaliza su ejecución.
+
+7.  **Manejo de fallos (DLQ y CloudWatch Alarm):**
+
+    * Si **`procesarRecetaLambda`** falla repetidamente al procesar un mensaje (debido a un error en el código, datos malformados, o problemas temporales de DynamoDB), **SQS** reintentará entregar el mensaje un número predefinido de veces (`maxReceiveCount`).
+
+    * Si todos los reintentos fallan, SQS mueve el mensaje a la **Dead-Letter Queue (`RecipeSubmissionDLQ`)**.
+
+    * La presencia de mensajes en la `RecipeSubmissionDLQ` dispara una **alarma de CloudWatch**.
+
+    * La alarma de CloudWatch envía una notificación a un tema **Amazon SNS**, que a su vez envía un correo electrónico de alerta a la dirección de correo electrónico del administrador.
+
+8.  **Actualización del frontend:**
+
+    * Después de recibir la respuesta `202 Accepted`, el frontend muestra un mensaje de éxito.
+
+    * Tras un breve retraso (para permitir que el procesamiento asíncrono se complete), el frontend recarga la lista de recetas para mostrar la nueva receta añadida.
+
+![Receta enviada](images/enviarReceta.jpg)
+
+
+9.  **Visualización de la nueva receta ( `getRecetasLambda`):**
+
+    * Al recargar la página principal, el código JavaScript (`script.js`) del frontend realiza una nueva solicitud `GET` al *endpoint* `/recetas` de API Gateway.
+
+    * API Gateway invoca a la función `getRecetasLambda`.
+
+    * `getRecetasLambda` lee todas las recetas (incluida la recién añadida) de la tabla Amazon DynamoDB (`Recipes`) y las devuelve a API Gateway, que a su vez las envía al frontend.
+
+    * El frontend actualiza la interfaz de usuario, mostrando la nueva receta en el listado.
+
+![Rellenar receta](images/nuevaReceta.jpg)
+
+Este flujo demuestra el poder del desacoplamiento y el procesamiento asíncrono para construir aplicaciones serverless robustas y responsivas.
+
+
 Este proyecto sirve como una base sólida para entender y construir aplicaciones serverless en AWS, demostrando patrones y servicios fundamentales para el desarrollo moderno en la nube. Se incluye el archivo template.yaml con la plantilla de CloudFormation que sería necesaria para desplegar el proyecto de 0, aunque no se ha podido probar porque incluye la creación de roles, a lo cual no tenemos permisos.
