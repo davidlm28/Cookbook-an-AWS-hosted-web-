@@ -2,6 +2,10 @@
 
 Este documento proporciona un resumen funcional y técnico detallado del proyecto "Cookbook", una aplicación web serverless diseñada para la gestión pública de recetas. Se añade también un archivo PASOS PARA LA IMPLEMENTACIÓN DEL PROYECTO COOKBOOK.pdf con los pasos de la implementación en la consola de AWS, además de un archivo template.yaml con la plantilla de ClouFormation que se utilizaría para automatizar el despiegue de la solución.
 
+## 0. Link a la web
+
+[Cookbook (an AWS hosted cooking website)](https://recetas-frontend-immune.s3.us-east-1.amazonaws.com/frontend/index.html)
+
 ## 1. Descripción Funcional
 
 "Cookbook" es una aplicación web que sirve como un **directorio público de recetas**. Permite a cualquier usuario interactuar con una colección compartida de recetas sin necesidad de autenticación.
