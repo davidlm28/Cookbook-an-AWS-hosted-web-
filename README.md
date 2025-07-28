@@ -1,6 +1,6 @@
 # Descripción Funcional y Técnica del Proyecto: Cookbook
 
-Este documento proporciona un resumen funcional y técnico detallado del proyecto "Cookbook", una aplicación web serverless diseñada para la gestión pública de recetas.
+Este documento proporciona un resumen funcional y técnico detallado del proyecto "Cookbook", una aplicación web serverless diseñada para la gestión pública de recetas. Se añade también un archivo PASOS PARA LA IMPLEMENTACIÓN DEL PROYECTO COOKBOOK.pdf con los pasos de la implementación en la consola de AWS, además de un archivo template.yaml con la plantilla de ClouFormation que se utilizaría para automatizar el despiegue de la solución.
 
 ## 1. Descripción Funcional
 
