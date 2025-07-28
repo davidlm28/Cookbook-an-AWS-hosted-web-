@@ -119,4 +119,4 @@ La arquitectura serverless proporciona una alta disponibilidad inherente a nivel
 * **Multi-AZ por Defecto:** Servicios como S3, API Gateway, Lambda, SQS, SNS y DynamoDB son inherentemente Multi-AZ. AWS gestiona automáticamente la replicación y el *failover* dentro de una región, asegurando que si una AZ falla, la aplicación sigue operativa.
 
 
-Este proyecto sirve como una base sólida para entender y construir aplicaciones serverless en AWS, demostrando patrones y servicios fundamentales para el desarrollo moderno en la nube.
+Este proyecto sirve como una base sólida para entender y construir aplicaciones serverless en AWS, demostrando patrones y servicios fundamentales para el desarrollo moderno en la nube. Se incluye el archivo template.yaml con la plantilla de CloudFormation que sería necesaria para desplegar el proyecto de 0, aunque no se ha podido probar porque incluye la creación de roles, a lo cual no tenemos permisos.
