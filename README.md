@@ -194,7 +194,7 @@ Al seguir estas buenas prácticas, el proyecto "Cookbook" no solo es funcional, 
 Para comprender cómo interactúan los componentes, veamos el flujo paso a paso cuando un usuario añade una nueva receta a través del frontend:
 
 0. **Acceder a la web**
-![Web Home](images/getRecetas.jpg)
+![Web Home](images/getRecetas.png)
 
 1.  **Interacción del usuario (Frontend en S3):**
 
@@ -204,7 +204,7 @@ Para comprender cómo interactúan los componentes, veamos el flujo paso a paso 
 
     * Hace clic en el botón "Añadir Receta".
 
-![Rellenar receta](images/rellenarReceta.jpg)
+![Rellenar receta](images/rellenarReceta.png)
 
 
 2.  **Envío de solicitud (Frontend a API Gateway):**
@@ -262,7 +262,7 @@ Para comprender cómo interactúan los componentes, veamos el flujo paso a paso 
 
     * Tras un breve retraso (para permitir que el procesamiento asíncrono se complete), el frontend recarga la lista de recetas para mostrar la nueva receta añadida.
 
-![Receta enviada](images/enviarReceta.jpg)
+![Receta enviada](images/enviarReceta.png)
 
 
 9.  **Visualización de la nueva receta ( `getRecetasLambda`):**
@@ -275,7 +275,7 @@ Para comprender cómo interactúan los componentes, veamos el flujo paso a paso 
 
     * El frontend actualiza la interfaz de usuario, mostrando la nueva receta en el listado.
 
-![Rellenar receta](images/nuevaReceta.jpg)
+![Rellenar receta](images/nuevaReceta.png)
 
 Este flujo demuestra el poder del desacoplamiento y el procesamiento asíncrono para construir aplicaciones serverless robustas y responsivas.
 
